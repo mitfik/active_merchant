@@ -1,0 +1,36 @@
+module ActiveMerchant #:nodoc:
+  module Billing #:nodoc:
+    module Integrations #:nodoc:
+      module Netaxept
+        class Helper < ActiveMerchant::Billing::Integrations::Helper
+          # Replace with the real mapping
+          mapping :account, 'merchantId'
+          mapping :amount, 'amount'
+        
+          mapping :order, 'orderNumber'
+
+          mapping :customer, :first_name => '',
+                             :last_name  => '',
+                             :email      => 'customer_email',
+                             :phone      => 'customer_phone'
+
+          mapping :billing_address, :city     => '',
+                                    :address1 => '',
+                                    :address2 => '',
+                                    :state    => '',
+                                    :zip      => '',
+                                    :country  => ''
+
+          mapping :notify_url, ''
+          mapping :language_form, "language"
+          mapping :return_url, 'redirect_url'
+          mapping :cancel_return_url, ''
+          mapping :description, ''
+          mapping :tax, ''
+          mapping :shipping, ''
+        end
+
+      end
+    end
+  end
+end

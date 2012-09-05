@@ -28,8 +28,20 @@ module ActiveMerchant #:nodoc:
         super
       end  
       
+      def setup_authorization(parameters)
+        requires!(parameters, :redirectUrl, :transationId, :amount, :orderNumber)
+        post = {}
+        add_credentials(post, parameters)
+        add_transaction(post, parameters)
+        add_order(post, parameters[:amount], parameters)
+
+        result = parse(ssl_get(build_url("REST/Setup.aspx", pick(post, :merchantId, :token, :serviceType, :amount, :currencyCode, :redirectUrl, :orderNumber, :transactionId))))
+        result["SetupString"] = extract_string_setup(result["SetupString"])
+        return result
+      end
+
       def purchase(money, creditcard, options = {})
-        requires!(options, :order_id)
+        requires!(options, :orderNumber)
 
         post = {}
         add_credentials(post, options)
@@ -40,12 +52,13 @@ module ActiveMerchant #:nodoc:
       end                       
 
       def authorize(money, creditcard, options = {})
-        requires!(options, :order_id)
+        requires!(options, :orderNumber)
 
         post = {}
         add_credentials(post, options)
         add_transaction(post, options)
         add_order(post, money, options)
+        # TODO credit card should not be send here
         add_creditcard(post, creditcard)
         commit('Auth', post)
       end
@@ -95,12 +108,12 @@ module ActiveMerchant #:nodoc:
       
       def add_transaction(post, options)
         post[:transactionId] = generate_transaction_id(options)
-        post[:serviceType] = 'M'
-        post[:redirectUrl] = 'http://example.com'
+        post[:serviceType] = @options[:serviceType] || 'B'
+        post[:redirectUrl] = options[:redirectUrl] || @options[:redirectUrl]
       end
       
       def add_order(post, money, options)
-        post[:orderNumber] = options[:order_id]
+        post[:orderNumber] = options[:orderNumber]
         post[:amount] = amount(money)
         post[:currencyCode] = (options[:currency] || currency(money))
       end
@@ -143,6 +156,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def commit_transaction_setup(response, parameters)
+        debugger
         response[:setup] = parse(ssl_get(build_url("REST/Setup.aspx", pick(parameters, :merchantId, :token, :serviceType, :amount, :currencyCode, :redirectUrl, :orderNumber, :transactionId))))
         process(response, :setup)
       end
@@ -184,6 +198,10 @@ module ActiveMerchant #:nodoc:
         else
           {:result => result}
         end
+      end
+
+      def extract_string_setup(result)
+        result.split("\"")[5]
       end
       
       def extract_xml(element)

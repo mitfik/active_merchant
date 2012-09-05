@@ -1,20 +1,30 @@
 require 'test_helper'
+require 'debugger'
+Debugger.start
 
 class NetaxeptTest < Test::Unit::TestCase
   def setup
     @gateway = NetaxeptGateway.new(
-                 :login => 'login',
-                 :password => 'password'
+     :login      => "test",
+     :password   => "test"
                )
 
     @credit_card = credit_card
     @amount = 100
     
     @options = { 
-      :order_id => '1'
+      :orderNumber => '1'
     }
   end
-  
+
+  def test_setup_authentication
+    options = {:redirectUrl => "http://test.url.com", :transationId => "12d1d12d12d2", :amount => 1150, :orderNumber => 44}
+    result = @gateway.setup_authorization(options)
+    assert result.has_key?("SetupString"), "Missing setup string key in respond"
+    assert result["SetupString"] =~ /.{10,}/, "VALUE of setup string is incorrect" # value must have proper length
+    assert result.is_a?(Hash), "Result should be a hash"
+  end
+
   def test_successful_purchase
     s = sequence("request")
     @gateway.expects(:ssl_get ).returns(successful_purchase_response[0]).in_sequence(s)

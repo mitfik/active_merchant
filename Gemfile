@@ -1,8 +1,6 @@
 source :rubygems
 gemspec
 
-
-gem "active_utils", :git => "git://github.com/mitfik/active_utils.git"
 group :test do
   gem 'json-jruby', :platforms => :jruby
   gem 'jruby-openssl', :platforms => :jruby
